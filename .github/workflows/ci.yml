@@ -1,0 +1,173 @@
+name: CI
+
+on:
+    pull_request:
+    push:
+        branches: [main]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    # Which apps does this change affect? A member PR → that member's app.
+    # A change to configs/, the starter or the lockfile → every app, because
+    # shared infra can break everyone at once.
+    changes:
+        runs-on: ubuntu-latest
+        outputs:
+            apps: ${{ steps.detect.outputs.apps }}
+            any: ${{ steps.detect.outputs.any }}
+            targets: ${{ steps.detect.outputs.targets }}
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+            - id: detect
+              run: node scripts/changed-apps.mjs origin/${{ github.base_ref || 'main' }}
+
+    # Guardrail, not a test: fails a member PR that reaches outside its own
+    # directory. CODEOWNERS routes reviews but enforces nothing.
+    scope:
+        if: github.event_name == 'pull_request'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+            - run: node scripts/check-scope.mjs origin/${{ github.base_ref }}
+              env:
+                  PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+
+    # Prettier is the one check that is not per-project: `prettier --check .`
+    # from the root already walks every app, so a matrix would only duplicate
+    # work. Always runs, even when no app changed.
+    format:
+        name: prettier
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - run: npm run format:check
+
+    # ESLint is per-project: the root config only covers configs/ and
+    # scripts/, each app only covers itself. `targets` is the repo root plus
+    # every changed app, so one matrix covers both and always has the root.
+    eslint:
+        name: eslint (${{ matrix.target }})
+        needs: changes
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                target: ${{ fromJSON(needs.changes.outputs.targets) }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - run: npm run lint
+              working-directory: ${{ matrix.target }}
+
+    # Same per-project story as ESLint: the root script typechecks configs/
+    # only, each app resolves its own tsconfig.
+    tsc:
+        name: tsc (${{ matrix.target }})
+        needs: changes
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                target: ${{ fromJSON(needs.changes.outputs.targets) }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - run: npm run typecheck
+              working-directory: ${{ matrix.target }}
+
+    unit:
+        needs: changes
+        if: needs.changes.outputs.any == 'true'
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                app: ${{ fromJSON(needs.changes.outputs.apps) }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - run: npm run test:unit
+              working-directory: ${{ matrix.app }}
+
+    # Cheap, and the only place a dev-only mistake (a story imported from
+    # src/, a missing asset) is caught before merge.
+    build:
+        needs: changes
+        if: needs.changes.outputs.any == 'true'
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                app: ${{ fromJSON(needs.changes.outputs.apps) }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - run: npm run build
+              working-directory: ${{ matrix.app }}
+
+    integration:
+        needs: changes
+        if: needs.changes.outputs.any == 'true'
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                app: ${{ fromJSON(needs.changes.outputs.apps) }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+
+            # Without this cache the browser download dominates the job. Keyed on
+            # the lockfile so it busts when Playwright is bumped.
+            - uses: actions/cache@v4
+              id: pw-cache
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: pw-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+            - run: npx playwright install --with-deps chromium
+              if: steps.pw-cache.outputs.cache-hit != 'true'
+            # Cached browsers don't bring their system libraries.
+            - run: npx playwright install-deps chromium
+              if: steps.pw-cache.outputs.cache-hit == 'true'
+
+            - run: npm run test:integration:headless
+              working-directory: ${{ matrix.app }}
+
+            - uses: actions/upload-artifact@v4
+              if: failure()
+              with:
+                  name: playwright-report-${{ strategy.job-index }}
+                  path: ${{ matrix.app }}/playwright-report/
+                  retention-days: 7

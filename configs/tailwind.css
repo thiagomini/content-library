@@ -1,0 +1,19 @@
+/* Shared Tailwind setup. Each app imports this from its own src/index.css,
+   which is also where class detection is scoped to that app. */
+
+/* Utilities are kept in a cascade layer on purpose. Primer v38 ships almost
+   all of its component CSS unlayered, and unlayered rules beat layered ones
+   whatever the order — so a utility can only ever decorate what Primer leaves
+   alone (margins, gaps, plain elements), never restyle a Primer component's
+   own padding or colours. That is exactly the boundary this kata wants, and
+   this makes it deterministic instead of a source-order coincidence. The
+   `primer` layer is declared first for the components Primer has already
+   migrated to layers. */
+@layer primer, theme, utilities;
+
+/* Theme and utilities only, no preflight: preflight is a global element reset
+   and Primer's <BaseStyles> already owns that job. Tailwind's default 4px
+   spacing step lines up with Primer's --base-size-* grid, so `p-2` is Primer's
+   8px either way — no theme remapping needed. */
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);

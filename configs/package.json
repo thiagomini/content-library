@@ -1,0 +1,14 @@
+{
+    "name": "@withnik/configs",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./vite": "./vite.ts",
+        "./vitest": "./vitest.ts",
+        "./playwright": "./playwright.ts",
+        "./eslint": "./eslint.ts",
+        "./primer": "./primer.tsx",
+        "./tailwind.css": "./tailwind.css",
+        "./tsconfig.base.json": "./tsconfig.base.json"
+    }
+}

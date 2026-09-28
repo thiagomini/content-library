@@ -1,0 +1,9 @@
+# Built output and reports, plus files no tool should reformat.
+node_modules
+dist
+coverage
+test-results
+playwright-report
+package-lock.json
+*.excalidraw
+.idea
