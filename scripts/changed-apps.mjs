@@ -37,16 +37,25 @@ const INFRA = [
 
 const baseRef = process.argv[2] ?? 'origin/main';
 
-const files = execFileSync(
-    'git',
-    ['diff', '--name-only', `${baseRef}...HEAD`],
-    {
+// A base we cannot diff against tells us nothing about what changed: a
+// branch's first push sends an all-zero SHA, a force-push or a shallow clone
+// can leave the old tip unreachable. Fail open and check everything — silently
+// skipping every app job is the one outcome worse than doing extra work.
+let files;
+try {
+    files = execFileSync('git', ['diff', '--name-only', `${baseRef}...HEAD`], {
         encoding: 'utf8',
-    },
-)
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean);
+        stdio: ['ignore', 'pipe', 'pipe'],
+    })
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+} catch {
+    console.error(
+        `Cannot diff against "${baseRef}"; assuming shared infra changed.`,
+    );
+    files = null;
+}
 
 const allMembers = () =>
     existsSync(MEMBERS)
@@ -55,9 +64,11 @@ const allMembers = () =>
               .map((d) => join(MEMBERS, d.name))
         : [];
 
-const infraChanged = files.some((file) =>
-    INFRA.some((path) => file === path || file.startsWith(path)),
-);
+const infraChanged =
+    files === null ||
+    files.some((file) =>
+        INFRA.some((path) => file === path || file.startsWith(path)),
+    );
 
 const apps = new Set();
 

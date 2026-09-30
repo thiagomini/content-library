@@ -23,8 +23,25 @@ jobs:
             - uses: actions/checkout@v4
               with:
                   fetch-depth: 0
+
+            # A pull_request diffs against the branch it targets. A push has no
+            # base_ref, and diffing main against itself finds nothing — which is
+            # what skipped every app job. `github.event.before` is the tip the
+            # branch had before the push; it is all-zeros on a first push, and
+            # the script treats any undiffable base as "infra changed".
+            - id: base
+              env:
+                  BASE_REF: ${{ github.base_ref }}
+                  BEFORE: ${{ github.event.before }}
+              run: |
+                  if [ -n "$BASE_REF" ]; then
+                      echo "ref=origin/$BASE_REF" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "ref=$BEFORE" >> "$GITHUB_OUTPUT"
+                  fi
+
             - id: detect
-              run: node scripts/changed-apps.mjs origin/${{ github.base_ref || 'main' }}
+              run: node scripts/changed-apps.mjs '${{ steps.base.outputs.ref }}'
 
     # Guardrail, not a test: fails a member PR that reaches outside its own
     # directory. CODEOWNERS routes reviews but enforces nothing.
