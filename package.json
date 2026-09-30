@@ -13,7 +13,7 @@
     ],
     "scripts": {
         "new-member": "node scripts/new-member.mjs",
-        "typecheck": "tsc --noEmit -p configs",
+        "typecheck": "tsc --noEmit -p configs && npm run typecheck --workspaces --if-present",
         "lint": "eslint --report-unused-disable-directives",
         "lint:fix": "eslint --report-unused-disable-directives --fix",
         "format": "prettier --write .",

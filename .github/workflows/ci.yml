@@ -18,7 +18,6 @@ jobs:
         outputs:
             apps: ${{ steps.detect.outputs.apps }}
             any: ${{ steps.detect.outputs.any }}
-            targets: ${{ steps.detect.outputs.targets }}
         steps:
             - uses: actions/checkout@v4
               with:
@@ -56,10 +55,11 @@ jobs:
               env:
                   PR_AUTHOR: ${{ github.event.pull_request.user.login }}
 
-    # Prettier and ESLint are both repo-wide from the root: `prettier --check .`
-    # walks every app, and ESLint v10 resolves each file's config from the
-    # nearest ancestor eslint.config.mjs, so the root run already covers every
-    # app that ships one. Both always run, even when no app changed.
+    # All three quality gates now run once from the root and cover the whole
+    # repo. Prettier walks every file; ESLint v10 resolves each file's config
+    # from the nearest ancestor eslint.config.mjs; tsc has no such discovery,
+    # so the root script fans out over the workspaces itself. None of them
+    # depend on `changes` — they always run, even when no app changed.
     format:
         name: prettier
         runs-on: ubuntu-latest
@@ -84,18 +84,9 @@ jobs:
             - run: npm ci
             - run: npm run lint
 
-    # tsc is the one check that does need the matrix. It has no per-file config
-    # discovery: the root script checks configs/ only, and each app resolves its
-    # own tsconfig. `targets` is the repo root plus every changed app, so one
-    # matrix covers both and always has the root.
     tsc:
-        name: tsc (${{ matrix.target }})
-        needs: changes
+        name: tsc
         runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                target: ${{ fromJSON(needs.changes.outputs.targets) }}
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-node@v4
@@ -104,7 +95,6 @@ jobs:
                   cache: npm
             - run: npm ci
             - run: npm run typecheck
-              working-directory: ${{ matrix.target }}
 
     unit:
         needs: changes

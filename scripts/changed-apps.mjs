@@ -9,16 +9,11 @@
 //   every member app.
 //
 // Outputs to $GITHUB_OUTPUT:
-//   apps    = ["seasons/1/members/anna", ...]
-//   any     = "true" | "false"
-//   targets = [".", "seasons/1/members/anna", ...]
+//   apps = ["seasons/1/members/anna", ...]
+//   any  = "true" | "false"
 //
-// `targets` is `apps` with the repo root prepended, for the tsc matrix.
-// TypeScript is per-project: the root script checks configs/ only, and each
-// app resolves its own tsconfig, so one matrix over `targets` covers both.
-// The root entry also keeps the matrix non-empty when no app changed.
-// ESLint needs no such fan-out — v10 resolves each file's config from the
-// nearest ancestor eslint.config.mjs, so one root run lints every app.
+// Only the per-app jobs (unit, build, integration) use this. Prettier, ESLint
+// and tsc are repo-wide from the root and run regardless of what changed.
 
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, existsSync, readdirSync } from 'node:fs';
@@ -85,11 +80,9 @@ if (infraChanged) {
 }
 
 const list = [...apps].sort();
-const output = [
-    `apps=${JSON.stringify(list)}`,
-    `any=${list.length > 0}`,
-    `targets=${JSON.stringify(['.', ...list])}`,
-].join('\n');
+const output = [`apps=${JSON.stringify(list)}`, `any=${list.length > 0}`].join(
+    '\n',
+);
 
 console.log(output);
 if (process.env.GITHUB_OUTPUT)
