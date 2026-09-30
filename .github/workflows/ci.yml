@@ -55,13 +55,13 @@ jobs:
               env:
                   PR_AUTHOR: ${{ github.event.pull_request.user.login }}
 
-    # All three quality gates now run once from the root and cover the whole
-    # repo. Prettier walks every file; ESLint v10 resolves each file's config
-    # from the nearest ancestor eslint.config.mjs; tsc has no such discovery,
-    # so the root script fans out over the workspaces itself. None of them
-    # depend on `changes` — they always run, even when no app changed.
-    format:
-        name: prettier
+    # One job, three gates. Every step runs even when an earlier one failed, so
+    # a PR gets its formatting, lint and type errors in a single report instead
+    # of one per push. All three are repo-wide — Prettier walks every file,
+    # ESLint v10 resolves each file's config from the nearest ancestor
+    # eslint.config.mjs, and the root typecheck fans out over the workspaces —
+    # so none of them depends on `changes`.
+    quality:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -70,31 +70,14 @@ jobs:
                   node-version: 22
                   cache: npm
             - run: npm ci
-            - run: npm run format:check
-
-    eslint:
-        name: eslint
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: 22
-                  cache: npm
-            - run: npm ci
-            - run: npm run lint
-
-    tsc:
-        name: tsc
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: 22
-                  cache: npm
-            - run: npm ci
-            - run: npm run typecheck
+            - name: prettier
+              run: npm run format:check
+            - name: eslint
+              if: '!cancelled()'
+              run: npm run lint
+            - name: tsc
+              if: '!cancelled()'
+              run: npm run typecheck
 
     unit:
         needs: changes
@@ -172,3 +155,32 @@ jobs:
                   name: playwright-report-${{ strategy.job-index }}
                   path: ${{ matrix.app }}/playwright-report/
                   retention-days: 7
+
+    # Branch protection can only require checks by name, but the per-app jobs
+    # are a matrix whose names depend on which apps changed — there is no fixed
+    # name to require. This gate collapses every job into one status: make `ci`
+    # the single required check and nothing merges while anything is red.
+    ci:
+        if: always()
+        needs: [changes, scope, quality, unit, build, integration]
+        runs-on: ubuntu-latest
+        steps:
+            # "skipped" is a legitimate outcome: `scope` only runs on pull
+            # requests, and the per-app jobs sit out a change that touched no
+            # app. A job skipped because its own dependency failed is still
+            # caught, because that dependency reports "failure".
+            - name: Verify every job passed
+              env:
+                  RESULTS: ${{ join(needs.*.result, ' ') }}
+              run: |
+                  echo "Job results: $RESULTS"
+                  for result in $RESULTS; do
+                      case "$result" in
+                          success | skipped) ;;
+                          *)
+                              echo "::error::A required job reported '$result'."
+                              exit 1
+                              ;;
+                      esac
+                  done
+                  echo "All required jobs passed."
