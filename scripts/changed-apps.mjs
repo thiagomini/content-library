@@ -13,10 +13,12 @@
 //   any     = "true" | "false"
 //   targets = [".", "seasons/1/members/anna", ...]
 //
-// `targets` is `apps` with the repo root prepended. ESLint and TypeScript are
-// per-project: the root config only sees configs/ and scripts/, each app only
-// sees itself. Running them over `targets` covers both in one matrix, and the
-// root entry keeps the matrix non-empty when no app changed.
+// `targets` is `apps` with the repo root prepended, for the tsc matrix.
+// TypeScript is per-project: the root script checks configs/ only, and each
+// app resolves its own tsconfig, so one matrix over `targets` covers both.
+// The root entry also keeps the matrix non-empty when no app changed.
+// ESLint needs no such fan-out — v10 resolves each file's config from the
+// nearest ancestor eslint.config.mjs, so one root run lints every app.
 
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, existsSync, readdirSync } from 'node:fs';
