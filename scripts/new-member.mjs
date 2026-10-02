@@ -4,10 +4,18 @@
 //   npm run new-member <github-handle> [season]
 //
 // Copies seasons/<season>/starter → seasons/<season>/members/<handle>,
-// renames the package, and installs so the workspace links it. Commit the
-// result together with the updated package-lock.json.
+// renames the package, assigns the folder to <handle> in .github/CODEOWNERS,
+// and installs so the workspace links it. Commit the result together with
+// the updated package-lock.json and .github/CODEOWNERS.
 
-import { cpSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+    appendFileSync,
+    cpSync,
+    existsSync,
+    mkdirSync,
+    readFileSync,
+    writeFileSync,
+} from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 
@@ -47,6 +55,18 @@ const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 pkg.name = `@content-library/${handle.toLowerCase()}`;
 writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 4)}\n`);
 
+const CODEOWNERS = join('.github', 'CODEOWNERS');
+// CODEOWNERS patterns use forward slashes regardless of the OS.
+const ownerLine = `/seasons/${season}/members/${handle}/ @${handle}`;
+const owners = existsSync(CODEOWNERS) ? readFileSync(CODEOWNERS, 'utf8') : '';
+if (!owners.split('\n').some((line) => line.trim() === ownerLine)) {
+    mkdirSync('.github', { recursive: true });
+    const separator = owners && !owners.endsWith('\n') ? '\n' : '';
+    appendFileSync(CODEOWNERS, `${separator}${ownerLine}\n`);
+}
+
 execFileSync('npm', ['install'], { stdio: 'inherit' });
 
-console.log(`\nCreated ${target}. Commit it with package-lock.json.`);
+console.log(
+    `\nCreated ${target}. Commit it with package-lock.json and ${CODEOWNERS}.`,
+);
