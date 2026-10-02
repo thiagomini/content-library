@@ -45,7 +45,7 @@ cpSync(starter, target, {
 const pkgPath = join(target, 'package.json');
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 pkg.name = `@content-library/${handle.toLowerCase()}`;
-writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 4)}\n`);
 
 execFileSync('npm', ['install'], { stdio: 'inherit' });
 
