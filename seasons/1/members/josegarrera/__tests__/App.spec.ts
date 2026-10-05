@@ -4,10 +4,6 @@ test.describe('The Content Library page', () => {
     test('lists every content item newest first, each linking to its original', async ({
         mount,
     }) => {
-        test.fail(
-            true,
-            'Outer loop of the task: turns green with the last burst',
-        );
         const app = await mount('App/Default');
 
         const cards = app.getByRole('listitem');
