@@ -1,8 +1,8 @@
-const publishedAtFormat = new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-});
-
 export function formatPublishedAt(publishedAt: string): string {
+    const publishedAtFormat = new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'medium',
+    });
+
     return publishedAtFormat.format(parseCalendarDay(publishedAt));
 }
 

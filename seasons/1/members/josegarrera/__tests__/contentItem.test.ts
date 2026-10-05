@@ -20,4 +20,12 @@ describe('The published date', () => {
 
         expect(formatted).toBe('Apr 2, 2026');
     });
+
+    it('keeps the calendar day east of Greenwich', () => {
+        vi.stubEnv('TZ', 'Asia/Tokyo');
+
+        const formatted = formatPublishedAt('2026-04-02');
+
+        expect(formatted).toBe('Apr 2, 2026');
+    });
 });
