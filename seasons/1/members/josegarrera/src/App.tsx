@@ -5,7 +5,7 @@ import { loadContentItems } from './contentLibraryData';
 
 export function App() {
     return (
-        <main className="flex flex-col gap-4 p-6">
+        <main className="mx-auto flex max-w-3xl flex-col gap-4 p-6">
             <PageHeader role="banner" aria-label="Content Library">
                 <PageHeader.TitleArea>
                     <PageHeader.Title as="h1">Content Library</PageHeader.Title>
