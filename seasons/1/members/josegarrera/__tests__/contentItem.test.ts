@@ -27,6 +27,16 @@ describe('The content library order', () => {
 
         expect(sorted).toEqual([newer, older]);
     });
+
+    it('leaves the data source order untouched', () => {
+        const older = aContentItem({ id: 'c_0001', publishedAt: '2025-12-04' });
+        const newer = aContentItem({ id: 'c_0002', publishedAt: '2026-09-25' });
+        const asLoaded = [older, newer];
+
+        sortNewestFirst(asLoaded);
+
+        expect(asLoaded).toEqual([older, newer]);
+    });
 });
 
 describe('The published date', () => {
