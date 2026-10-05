@@ -37,4 +37,22 @@ test.describe('The content library', () => {
         );
         await expect(firstCard).toContainText('Dec 4, 2025');
     });
+
+    test('opens the original in a new tab from the title and the Open button', async ({
+        mount,
+    }) => {
+        const library = await mount('ContentLibrary/WithItems', {
+            props: { items: [repositoryLesson] },
+        });
+
+        const title = library.getByRole('link', {
+            name: 'The need of Repository Layer',
+        });
+        const openButton = library.getByRole('link', { name: 'Open' });
+
+        await expect(title).toHaveAttribute('href', repositoryLesson.url);
+        await expect(title).toHaveAttribute('target', '_blank');
+        await expect(openButton).toHaveAttribute('href', repositoryLesson.url);
+        await expect(openButton).toHaveAttribute('target', '_blank');
+    });
 });

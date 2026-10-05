@@ -1,4 +1,4 @@
-import { Label, Text } from '@primer/react';
+import { Label, Link, LinkButton, Text } from '@primer/react';
 import { Card } from '@primer/react/experimental';
 
 import { type ContentItem, formatPublishedAt } from './contentItem';
@@ -13,8 +13,25 @@ export function ContentLibrary({ items }: ContentLibraryProps) {
             {items.map((item) => (
                 <li key={item.id}>
                     <Card>
-                        <Card.Heading>{item.title}</Card.Heading>
+                        <Card.Heading>
+                            <Link
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {item.title}
+                            </Link>
+                        </Card.Heading>
                         <Card.Description>{item.excerpt}</Card.Description>
+                        <Card.Action>
+                            <LinkButton
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Open
+                            </LinkButton>
+                        </Card.Action>
                         <Card.Metadata>
                             <Label>{item.type}</Label>
                             <Text>{formatPublishedAt(item.publishedAt)}</Text>
