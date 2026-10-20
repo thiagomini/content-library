@@ -17,7 +17,7 @@ export function ContentDashboard({ items, locale }: ContentDashboardProps) {
             {viewModel.items.map((item) => (
                 <li
                     key={item.id}
-                    className="flex flex-col gap-4 rounded border border-default p-4"
+                    className="border-default flex flex-col gap-4 rounded border p-4"
                 >
                     <div className="flex flex-wrap items-center gap-2">
                         <Label>{item.type}</Label>
@@ -25,11 +25,7 @@ export function ContentDashboard({ items, locale }: ContentDashboardProps) {
                     </div>
 
                     <Heading as="h2">
-                        <Link
-                            href={item.url}
-                            target="_blank"
-                            rel="noreferrer"
-                        >
+                        <Link href={item.url} target="_blank" rel="noreferrer">
                             {item.title}
                         </Link>
                     </Heading>
