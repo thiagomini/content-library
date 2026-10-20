@@ -41,37 +41,39 @@ describe('createContentDashboardViewModel', () => {
 
         expect(
             createContentDashboardViewModel(items, { locale: 'en-US' }),
-        ).toStrictEqual([
-            {
-                id: 'newest',
-                title: 'Newest content',
-                type: 'lesson',
-                url: 'https://example.com/newest',
-                publishedAtFormatted: 'Jun 30, 2026',
-                excerpt: 'Published last.',
-                durationSeconds: null,
-                thumbnailUrl: null,
-            },
-            {
-                id: 'middle',
-                title: 'Middle content',
-                type: 'lesson',
-                url: 'https://example.com/middle',
-                publishedAtFormatted: 'Mar 15, 2026',
-                excerpt: 'Published in the middle.',
-                durationSeconds: null,
-                thumbnailUrl: null,
-            },
-            {
-                id: 'oldest',
-                title: 'Oldest content',
-                type: 'lesson',
-                url: 'https://example.com/oldest',
-                publishedAtFormatted: 'Jan 1, 2026',
-                excerpt: 'Published first.',
-                durationSeconds: null,
-                thumbnailUrl: null,
-            },
-        ]);
+        ).toStrictEqual({
+            items: [
+                {
+                    id: 'newest',
+                    title: 'Newest content',
+                    type: 'lesson',
+                    url: 'https://example.com/newest',
+                    publishedAtFormatted: 'Jun 30, 2026',
+                    excerpt: 'Published last.',
+                    durationSeconds: null,
+                    thumbnailUrl: null,
+                },
+                {
+                    id: 'middle',
+                    title: 'Middle content',
+                    type: 'lesson',
+                    url: 'https://example.com/middle',
+                    publishedAtFormatted: 'Mar 15, 2026',
+                    excerpt: 'Published in the middle.',
+                    durationSeconds: null,
+                    thumbnailUrl: null,
+                },
+                {
+                    id: 'oldest',
+                    title: 'Oldest content',
+                    type: 'lesson',
+                    url: 'https://example.com/oldest',
+                    publishedAtFormatted: 'Jan 1, 2026',
+                    excerpt: 'Published first.',
+                    durationSeconds: null,
+                    thumbnailUrl: null,
+                },
+            ],
+        });
     });
 });

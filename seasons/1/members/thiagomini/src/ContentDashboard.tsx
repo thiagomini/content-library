@@ -14,7 +14,7 @@ export function ContentDashboard({ items, locale }: ContentDashboardProps) {
 
     return (
         <ul className="flex flex-col gap-4">
-            {viewModel.map((item) => (
+            {viewModel.items.map((item) => (
                 <li
                     key={item.id}
                     className="flex flex-col gap-4 rounded border border-default p-4"

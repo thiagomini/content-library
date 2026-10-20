@@ -11,9 +11,15 @@ export interface ContentItem {
     thumbnailUrl: string | null;
 }
 
-export interface ContentDashboardViewModel
-    extends Omit<ContentItem, 'publishedAt'> {
+export interface ContentDashboardItemViewModel extends Omit<
+    ContentItem,
+    'publishedAt'
+> {
     publishedAtFormatted: string;
+}
+
+export interface ContentDashboardViewModel {
+    items: ContentDashboardItemViewModel[];
 }
 
 export interface ContentDashboardViewModelOptions {
@@ -25,19 +31,21 @@ export const contentItems: readonly ContentItem[] = content.items;
 export function createContentDashboardViewModel(
     items: readonly ContentItem[],
     options?: ContentDashboardViewModelOptions,
-): ContentDashboardViewModel[] {
+): ContentDashboardViewModel {
     const dateFormatter = new Intl.DateTimeFormat(options?.locale, {
         dateStyle: 'medium',
     });
 
-    return [...items]
-        .sort((firstItem, secondItem) =>
-            secondItem.publishedAt.localeCompare(firstItem.publishedAt),
-        )
-        .map(({ publishedAt, ...item }) => ({
-            ...item,
-            publishedAtFormatted: dateFormatter.format(
-                new Date(`${publishedAt}T00:00:00`),
-            ),
-        }));
+    return {
+        items: [...items]
+            .sort((firstItem, secondItem) =>
+                secondItem.publishedAt.localeCompare(firstItem.publishedAt),
+            )
+            .map(({ publishedAt, ...item }) => ({
+                ...item,
+                publishedAtFormatted: dateFormatter.format(
+                    new Date(`${publishedAt}T00:00:00`),
+                ),
+            })),
+    };
 }
