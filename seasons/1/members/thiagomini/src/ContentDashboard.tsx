@@ -6,7 +6,7 @@ import {
 
 interface ContentDashboardProps {
     items: readonly ContentItem[];
-    locale?: string;
+    locale: string;
 }
 
 export function ContentDashboard({ items, locale }: ContentDashboardProps) {

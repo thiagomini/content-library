@@ -9,7 +9,10 @@ export function App() {
                 Content Library
             </Heading>
 
-            <ContentDashboard items={contentItems} />
+            <ContentDashboard
+                items={contentItems}
+                locale={navigator.language}
+            />
         </main>
     );
 }

@@ -23,7 +23,9 @@ export const Default = ({
     locale,
 }: {
     items: readonly ContentItem[];
-    locale?: string;
+    locale: string;
 }) => <ContentDashboard items={items} locale={locale} />;
 
-export const Empty = () => <ContentDashboard items={[]} />;
+export const Empty = () => (
+    <ContentDashboard items={[]} locale={navigator.language} />
+);

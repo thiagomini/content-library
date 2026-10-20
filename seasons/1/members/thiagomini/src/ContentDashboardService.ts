@@ -30,15 +30,15 @@ export const contentItems: readonly ContentItem[] = content.items;
 
 export function createContentDashboardViewModel(
     items: readonly ContentItem[],
-    options?: ContentDashboardViewModelOptions,
+    options: ContentDashboardViewModelOptions,
 ): ContentDashboardViewModel {
     const dateFormatter = new Intl.DateTimeFormat(options?.locale, {
         dateStyle: 'medium',
     });
 
     return {
-        items: [...items]
-            .sort((firstItem, secondItem) =>
+        items: items
+            .toSorted((firstItem, secondItem) =>
                 secondItem.publishedAt.localeCompare(firstItem.publishedAt),
             )
             .map(({ publishedAt, ...item }) => ({
